@@ -1,0 +1,10 @@
+name = "QuantumTags"
+uuid = "2406e0f5-9e5e-4424-966e-8bc9c78b228f"
+authors = ["Sergio Sánchez Ramírez <sergio.sanchez.ramirez+git@bsc.es>"]
+version = "0.1.0"
+
+[deps]
+Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
+
+[compat]
+Compat = "4.16.0"
