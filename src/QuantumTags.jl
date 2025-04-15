@@ -114,7 +114,7 @@ function Base.getindex(bond::Bond, i::Int)
     end
 end
 
-function Base.iterate(bond::Bond, state=0)
+function Base.iterate(bond::Bond, state = 0)
     if state == 0
         (bond.src, 1)
     elseif state == 1
@@ -147,8 +147,10 @@ end
 
 Plug(site::S; kwargs...) where {S} = Plug{S}(; site, kwargs...)
 Plug(id::Int; kwargs...) = Plug(CartesianSite(id); kwargs...)
-Plug(@nospecialize(id::NTuple{N,Int}); kwargs...) where {N} = Plug(CartesianSite(id); kwargs...)
-Plug(@nospecialize(id::Vararg{Int,N}); kwargs...) where {N} = Plug(CartesianSite(id); kwargs...)
+Plug(@nospecialize(id::NTuple{N,Int}); kwargs...) where {N} =
+    Plug(CartesianSite(id); kwargs...)
+Plug(@nospecialize(id::Vararg{Int,N}); kwargs...) where {N} =
+    Plug(CartesianSite(id); kwargs...)
 Plug(@nospecialize(id::CartesianIndex); kwargs...) = Plug(CartesianSite(id); kwargs...)
 
 isplug(::Tag) = false
@@ -160,7 +162,7 @@ plug(x::Plug) = x
 
 is_plug_equal(x, y) = plug(x) == plug(y)
 
-Base.adjoint(x::Plug) = Plug(site(x); isdual=!isdual(x))
+Base.adjoint(x::Plug) = Plug(site(x); isdual = !isdual(x))
 
 Base.show(io::IO, x::Plug) = print(io, "$(site(x))$(isdual(x) ? "'" : "")")
 
@@ -175,7 +177,7 @@ See also: [`@site_str`](@ref)
 macro plug_str(str)
     isdual = endswith(str, '\'')
     str = chopsuffix(str, "'")
-    return :(Plug(@site_str($str); isdual=$isdual))
+    return :(Plug(@site_str($str); isdual = $isdual))
 end
 
 end # module QuantumTags
