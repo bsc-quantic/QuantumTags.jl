@@ -5,6 +5,7 @@ using Compat: @compat
 @compat public Tag
 
 export Site, issite, site, @site_str, is_site_equal
+export Link, islink
 export Bond, isbond, bond, @bond_str
 export Plug, isplug, plug, isdual, @plug_str, is_plug_equal
 
@@ -63,6 +64,10 @@ Base.show(io::IO, x::Site) = print(io, "$(x.id)")
 
 # Bond interface
 abstract type Link <: Tag end
+
+islink(::Tag) = false
+islink(::Link) = true
+
 """
     Bond(src, dst)
 
