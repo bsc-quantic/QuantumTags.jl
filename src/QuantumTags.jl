@@ -36,10 +36,13 @@ macro site_str(str)
     # shortcut for 1-dim sites (e.g. `site"1"`)
     if expr isa Int
         return :(CartesianSite($expr))
+    elseif expr isa Symbol
+        return :(CartesianSite($(esc(expr))))
+    elseif Meta.isexpr(expr, :tuple)
+        return :(CartesianSite($(map(esc, expr.args)...)))
+    else
+        throw(ArgumentError("Invalid site string"))
     end
-
-    @assert Meta.isexpr(expr, :tuple) "Invalid site string"
-    return :(CartesianSite($(expr.args...)))
 end
 
 """
@@ -93,7 +96,9 @@ macro bond_str(str)
     @assert length(m.captures) == 2
     src = m.captures[1]
     dst = m.captures[2]
-    return :(Bond(@site_str($src), @site_str($dst)))
+    src_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, src)
+    dst_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, dst)
+    return :(Bond($src_expr, $dst_expr))
 end
 
 isbond(::Tag) = false
@@ -182,7 +187,8 @@ See also: [`@site_str`](@ref)
 macro plug_str(str)
     isdual = endswith(str, '\'')
     str = chopsuffix(str, "'")
-    return :(Plug(@site_str($str); isdual = $isdual))
+    site_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, str)
+    return :(Plug($(site_expr); isdual=$isdual))
 end
 
 end # module QuantumTags
