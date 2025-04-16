@@ -188,7 +188,7 @@ macro plug_str(str)
     isdual = endswith(str, '\'')
     str = chopsuffix(str, "'")
     site_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, str)
-    return :(Plug($(site_expr); isdual=$isdual))
+    return :(Plug($(site_expr); isdual = $isdual))
 end
 
 end # module QuantumTags
