@@ -20,7 +20,7 @@ abstract type Site <: Tag end
 issite(::Tag) = false
 issite(::Site) = true
 
-is_site_equal(x, y) = site(x) == site(y)
+is_site_equal(x, y) = issite(x) && issite(y) ? site(x) == site(y) : false
 
 function site end
 site(x::Site) = x
@@ -170,7 +170,7 @@ isdual(x::Plug) = x.isdual
 site(x::Plug) = x.site
 plug(x::Plug) = x
 
-is_plug_equal(x, y) = plug(x) == plug(y)
+is_plug_equal(x, y) = isplug(x) && isplug(y) ? plug(x) == plug(y) : false
 
 Base.adjoint(x::Plug) = Plug(site(x); isdual = !isdual(x))
 
