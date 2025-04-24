@@ -4,9 +4,9 @@ using Compat: @compat
 
 @compat public Tag
 
-export Site, issite, site, @site_str, is_site_equal
+export Site, CartesianSite, issite, site, @site_str, is_site_equal
 export Link, islink
-export Bond, isbond, bond, @bond_str
+export Bond, isbond, bond, @bond_str, hassite, sites
 export Plug, isplug, plug, isdual, @plug_str, is_plug_equal
 
 abstract type Tag end
@@ -58,12 +58,15 @@ end
 CartesianSite(site::CartesianSite) = site
 CartesianSite(id::Int) = CartesianSite((id,))
 CartesianSite(id::Vararg{Int,N}) where {N} = CartesianSite(id)
-CartesianSite(id::CartesianIndex) = CartesianSite(Tuple(id))
+CartesianSite(id::Base.CartesianIndex) = CartesianSite(Tuple(id))
 
 Base.isless(a::CartesianSite, b::CartesianSite) = a.id < b.id
 Base.ndims(::CartesianSite{N}) where {N} = N
 
 Base.show(io::IO, x::Site) = print(io, "$(x.id)")
+
+Core.Tuple(x::CartesianSite) = x.id
+Base.CartesianIndex(x::CartesianSite) = CartesianIndex(Tuple(x))
 
 # Bond interface
 abstract type Link <: Tag end
@@ -108,11 +111,11 @@ bond(x::Bond) = x
 
 Base.show(io::IO, x::Bond) = print(io, "$(x.src) <=> $(x.dst)")
 
-hassite(bond::Bond, site) = site == site(bond.src) || site == site(bond.dst)
+hassite(bond::Bond, x) = x == site(bond.src) || x == site(bond.dst)
 sites(bond::Bond) = (site(bond.src), site(bond.dst))
 
-Pair(e::Bond) = e.src => e.dst
-Tuple(e::Bond) = (e.src, e.dst)
+Core.Pair(e::Bond) = e.src => e.dst
+Core.Tuple(e::Bond) = (e.src, e.dst)
 
 function Base.getindex(bond::Bond, i::Int)
     if i == 1
@@ -124,7 +127,7 @@ function Base.getindex(bond::Bond, i::Int)
     end
 end
 
-function Base.iterate(bond::Bond, state = 0)
+function Base.iterate(bond::Bond, state=0)
     if state == 0
         (bond.src, 1)
     elseif state == 1
@@ -172,7 +175,7 @@ plug(x::Plug) = x
 
 is_plug_equal(x, y) = isplug(x) && isplug(y) ? plug(x) == plug(y) : false
 
-Base.adjoint(x::Plug) = Plug(site(x); isdual = !isdual(x))
+Base.adjoint(x::Plug) = Plug(site(x); isdual=!isdual(x))
 
 Base.show(io::IO, x::Plug) = print(io, "$(site(x))$(isdual(x) ? "'" : "")")
 
@@ -188,7 +191,7 @@ macro plug_str(str)
     isdual = endswith(str, '\'')
     str = chopsuffix(str, "'")
     site_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, str)
-    return :(Plug($(site_expr); isdual = $isdual))
+    return :(Plug($(site_expr); isdual=$isdual))
 end
 
 end # module QuantumTags
