@@ -63,7 +63,7 @@ CartesianSite(id::Base.CartesianIndex) = CartesianSite(Tuple(id))
 Base.isless(a::CartesianSite, b::CartesianSite) = a.id < b.id
 Base.ndims(::CartesianSite{N}) where {N} = N
 
-Base.show(io::IO, x::Site) = print(io, "$(x.id)")
+Base.show(io::IO, x::CartesianSite) = print(io, "$(x.id)")
 
 Core.Tuple(x::CartesianSite) = x.id
 Base.CartesianIndex(x::CartesianSite) = CartesianIndex(Tuple(x))
