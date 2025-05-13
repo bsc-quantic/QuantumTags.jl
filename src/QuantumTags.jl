@@ -127,7 +127,7 @@ function Base.getindex(bond::Bond, i::Int)
     end
 end
 
-function Base.iterate(bond::Bond, state=0)
+function Base.iterate(bond::Bond, state = 0)
     if state == 0
         (bond.src, 1)
     elseif state == 1
@@ -175,7 +175,7 @@ plug(x::Plug) = x
 
 is_plug_equal(x, y) = isplug(x) && isplug(y) ? plug(x) == plug(y) : false
 
-Base.adjoint(x::Plug) = Plug(site(x); isdual=!isdual(x))
+Base.adjoint(x::Plug) = Plug(site(x); isdual = !isdual(x))
 
 Base.show(io::IO, x::Plug) = print(io, "$(site(x))$(isdual(x) ? "'" : "")")
 
@@ -191,7 +191,7 @@ macro plug_str(str)
     isdual = endswith(str, '\'')
     str = chopsuffix(str, "'")
     site_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, str)
-    return :(Plug($(site_expr); isdual=$isdual))
+    return :(Plug($(site_expr); isdual = $isdual))
 end
 
 end # module QuantumTags
