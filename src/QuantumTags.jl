@@ -17,6 +17,7 @@ Base.copy(x::Tag) = x
 # Site interface
 abstract type Site <: Tag end
 
+issite(_) = false
 issite(::Tag) = false
 issite(::Site) = true
 
@@ -71,6 +72,7 @@ Base.CartesianIndex(x::CartesianSite) = CartesianIndex(Tuple(x))
 # Bond interface
 abstract type Link <: Tag end
 
+islink(_) = false
 islink(::Tag) = false
 islink(::Link) = true
 
@@ -104,6 +106,7 @@ macro bond_str(str)
     return :(Bond($src_expr, $dst_expr))
 end
 
+isbond(_) = false
 isbond(::Tag) = false
 isbond(::Bond) = true
 
@@ -164,6 +167,7 @@ Plug(@nospecialize(id::NTuple{N,Int}); kwargs...) where {N} = Plug(CartesianSite
 Plug(@nospecialize(id::Vararg{Int,N}); kwargs...) where {N} = Plug(CartesianSite(id); kwargs...)
 Plug(@nospecialize(id::CartesianIndex); kwargs...) = Plug(CartesianSite(id); kwargs...)
 
+isplug(_) = false
 isplug(::Tag) = false
 isplug(::Plug) = true
 isdual(x::Plug) = x.isdual
