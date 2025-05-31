@@ -84,11 +84,11 @@ Represents a bond between two [`Site`](@ref) objects.
 struct Bond{A,B} <: Link
     src::A
     dst::B
-
-    Bond{A,B}(src::A, dst::B) where {A,B} = new{A,B}(minmax(src, dst)...)
 end
 
-Bond(src::Src, dst::Dst) where {Src,Dst} = Bond{Src,Dst}(src, dst)
+# required for set-like equivalence to work on dictionaries (i.e. )
+Base.hash(bond::Bond, h::UInt) = hash(bond.src, h) ⊻ hash(bond.dst, h)
+Base.:(==)(a::Bond, b::Bond) = a.src == b.src && a.dst == b.dst || a.src == b.dst && a.dst == b.src
 
 """
     bond"i,j,...-k,l,..."
