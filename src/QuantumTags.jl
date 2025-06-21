@@ -15,7 +15,9 @@ abstract type Tag end
 Base.copy(x::Tag) = x
 
 # Site interface
-abstract type Site <: Tag end
+struct Site{T} <: Tag
+    id::T
+end
 
 issite(_) = false
 issite(::Tag) = false
@@ -52,12 +54,11 @@ end
 
 Represents a physical site in a Cartesian coordinate system.
 """
-struct CartesianSite{N} <: Site
-    id::NTuple{N,Int}
-end
+const CartesianSite{N} = Site{NTuple{N,Int}}
 
 CartesianSite(site::CartesianSite) = site
-CartesianSite(id::Int) = CartesianSite((id,))
+CartesianSite(id::NTuple{N}) where {N} = CartesianSite{N}(id)
+CartesianSite(id::Int) = Site((id,))
 CartesianSite(id::Vararg{Int,N}) where {N} = CartesianSite(id)
 CartesianSite(id::Base.CartesianIndex) = CartesianSite(Tuple(id))
 
