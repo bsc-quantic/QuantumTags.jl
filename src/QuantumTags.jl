@@ -1,9 +1,5 @@
 module QuantumTags
 
-using Compat: @compat
-
-@compat public Tag
-
 export Site, CartesianSite, issite, site, @site_str, is_site_equal
 export Link, islink
 export Bond, isbond, bond, @bond_str, hassite, sites
