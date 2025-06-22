@@ -111,8 +111,11 @@ struct Bond{A,B} <: Tag
 end
 
 # required for set-like equivalence to work on dictionaries (i.e. )
-Base.hash(bond::Bond, h::UInt) = hash(bond.src, h) ⊻ hash(bond.dst, h)
-Base.:(==)(a::Bond, b::Bond) = a.src == b.src && a.dst == b.dst || a.src == b.dst && a.dst == b.src
+bond_hash(bond::Bond, h::UInt) = hash(bond.src, h) ⊻ hash(bond.dst, h)
+function is_bond_equal(a::Bond, b::Bond)
+    is_site_equal(a.src, b.src) && is_site_equal(a.dst, b.dst) ||
+        is_site_equal(a.src, b.dst) && is_site_equal(a.dst, b.src)
+end
 
 """
     bond"i,j,...-k,l,..."
