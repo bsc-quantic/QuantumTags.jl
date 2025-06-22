@@ -141,7 +141,7 @@ bond(x::Bond) = x
 
 Base.show(io::IO, x::Bond) = print(io, "$(x.src) <=> $(x.dst)")
 
-hassite(bond::Bond, x) = x == site(bond.src) || x == site(bond.dst)
+hassite(bond::Bond, x) = is_site_equal(bond.src, x) || is_site_equal(bond.dst, x)
 sites(bond::Bond) = (site(bond.src), site(bond.dst))
 
 Core.Pair(e::Bond) = e.src => e.dst
