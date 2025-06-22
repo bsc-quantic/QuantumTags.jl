@@ -66,6 +66,31 @@ Base.show(io::IO, x::CartesianSite) = print(io, "$(x.id)")
 Core.Tuple(x::CartesianSite) = x.id
 Base.CartesianIndex(x::CartesianSite) = CartesianIndex(Tuple(x))
 
+"""
+    NamedSite(name)
+
+Represents a site identified by a name. `name` must be a `AbstractString` or `Symbol`.
+"""
+const NamedSite{S<:Union{<:AbstractString,Symbol}} = Site{S}
+
+NamedSite(name::S) where {S<:Union{<:AbstractString,Symbol}} = Site{S}(name)
+
+Base.string(x::NamedSite) = string(x.id)
+Base.show(io::IO, x::NamedSite{<:AbstractString}) = print(io, "site \"$(x.id)\"")
+Base.show(io::IO, x::NamedSite{Symbol}) = print(io, "site :$(x.id)")
+
+"""
+    MultiSite(a, b, ...)
+
+Represents a site that is a combination of multiple sites. The sites are given as a comma-separated list of [`Site`](@ref) objects.
+"""
+const MultiSite{N,S<:Site} = Site{NTuple{N,S}}
+
+MultiSite(sites::S...) where {N,S<:Site} = Site{NTuple{N,S}}(sites)
+
+is_site_equal(a::MultiSite, b::MultiSite) = length(a.id) == length(b.id) && all(is_site_equal.(a.id, b.id))
+hassite(site::MultiSite, x) = any(is_site_equal(x, s) for s in site.id)
+
 # Bond interface
 abstract type Link <: Tag end
 
