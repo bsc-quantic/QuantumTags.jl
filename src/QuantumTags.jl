@@ -92,7 +92,9 @@ is_site_equal(a::MultiSite, b::MultiSite) = length(a.id) == length(b.id) && all(
 hassite(site::MultiSite, x) = any(is_site_equal(x, s) for s in site.id)
 
 # Bond interface
-abstract type Link <: Tag end
+struct Link{T} <: Tag
+    id::T
+end
 
 islink(_) = false
 islink(::Tag) = false
@@ -103,7 +105,7 @@ islink(::Link) = true
 
 Represents a bond between two [`Site`](@ref) objects.
 """
-struct Bond{A,B} <: Link
+struct Bond{A,B} <: Tag
     src::A
     dst::B
 end
@@ -178,7 +180,7 @@ Base.last(bond::Bond) = bond.dst
 
 Represents a physical index related to a [`Site`](@ref) with an annotation of input or output.
 """
-Base.@kwdef struct Plug{S} <: Link
+Base.@kwdef struct Plug{S} <: Tag
     site::S
     isdual::Bool = false
 end
