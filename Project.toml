@@ -1,4 +1,4 @@
 name = "QuantumTags"
 uuid = "2406e0f5-9e5e-4424-966e-8bc9c78b228f"
 authors = ["Sergio Sánchez Ramírez <sergio.sanchez.ramirez+git@bsc.es>"]
-version = "0.1.5"
+version = "0.2.0"
