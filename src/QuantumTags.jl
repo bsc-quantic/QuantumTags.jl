@@ -112,7 +112,7 @@ struct Bond{A,B} <: Tag
     dst::B
 end
 
-Base.show(io::IO, x::Bond) = print(io, "bond<$(x.src) <=> $(x.dst)>")
+Base.show(io::IO, x::Bond) = print(io, "bond<$(x.src) ⟷ $(x.dst)>")
 
 # required for set-like equivalence to work on dictionaries (i.e. )
 bond_hash(bond::Bond, h::UInt) = hash(bond.src, h) ⊻ hash(bond.dst, h)
