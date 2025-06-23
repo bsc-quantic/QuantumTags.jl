@@ -15,6 +15,8 @@ struct Site{T} <: Tag
     id::T
 end
 
+Base.show(io::IO, x::Site) = print(io, "site<$(x.id)>")
+
 issite(_) = false
 issite(::Tag) = false
 issite(::Site) = true
@@ -61,8 +63,6 @@ CartesianSite(id::Base.CartesianIndex) = CartesianSite(Tuple(id))
 Base.isless(a::CartesianSite, b::CartesianSite) = a.id < b.id
 Base.ndims(::CartesianSite{N}) where {N} = N
 
-Base.show(io::IO, x::CartesianSite) = print(io, "site $(x.id)")
-
 Core.Tuple(x::CartesianSite) = x.id
 Base.CartesianIndex(x::CartesianSite) = CartesianIndex(Tuple(x))
 
@@ -76,8 +76,8 @@ const NamedSite{S<:Union{<:AbstractString,Symbol}} = Site{S}
 NamedSite(name::S) where {S<:Union{<:AbstractString,Symbol}} = Site{S}(name)
 
 Base.string(x::NamedSite) = string(x.id)
-Base.show(io::IO, x::NamedSite{<:AbstractString}) = print(io, "site \"$(x.id)\"")
-Base.show(io::IO, x::NamedSite{Symbol}) = print(io, "site :$(x.id)")
+Base.show(io::IO, x::NamedSite{<:AbstractString}) = print(io, "site<\"$(x.id)\">")
+Base.show(io::IO, x::NamedSite{Symbol}) = print(io, "site<:$(x.id)>")
 
 """
     MultiSite(a, b, ...)
@@ -96,6 +96,8 @@ struct Link{T} <: Tag
     id::T
 end
 
+Base.show(io::IO, x::Link) = print(io, "link<$(x.id)>")
+
 islink(_) = false
 islink(::Tag) = false
 islink(::Link) = true
@@ -109,6 +111,8 @@ struct Bond{A,B} <: Tag
     src::A
     dst::B
 end
+
+Base.show(io::IO, x::Bond) = print(io, "bond<$(x.src) <=> $(x.dst)>")
 
 # required for set-like equivalence to work on dictionaries (i.e. )
 bond_hash(bond::Bond, h::UInt) = hash(bond.src, h) ⊻ hash(bond.dst, h)
@@ -138,8 +142,6 @@ isbond(::Tag) = false
 isbond(::Bond) = true
 
 bond(x::Bond) = x
-
-Base.show(io::IO, x::Bond) = print(io, "$(x.src) <=> $(x.dst)")
 
 hassite(bond::Bond, x) = is_site_equal(bond.src, x) || is_site_equal(bond.dst, x)
 sites(bond::Bond) = (site(bond.src), site(bond.dst))
@@ -194,6 +196,8 @@ Plug(@nospecialize(id::NTuple{N,Int}); kwargs...) where {N} = Plug(CartesianSite
 Plug(@nospecialize(id::Vararg{Int,N}); kwargs...) where {N} = Plug(CartesianSite(id); kwargs...)
 Plug(@nospecialize(id::CartesianIndex); kwargs...) = Plug(CartesianSite(id); kwargs...)
 
+Base.show(io::IO, x::Plug) = print(io, "plug<$(site(x))$(isdual(x) ? "'" : "")>")
+
 isplug(_) = false
 isplug(::Tag) = false
 isplug(::Plug) = true
@@ -205,8 +209,6 @@ plug(x::Plug) = x
 is_plug_equal(x, y) = isplug(x) && isplug(y) ? plug(x) == plug(y) : false
 
 Base.adjoint(x::Plug) = Plug(site(x); isdual=!isdual(x))
-
-Base.show(io::IO, x::Plug) = print(io, "$(site(x))$(isdual(x) ? "'" : "")")
 
 """
     plug"i,j,...[']"
