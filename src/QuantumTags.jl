@@ -79,17 +79,18 @@ Base.string(x::NamedSite) = string(x.id)
 Base.show(io::IO, x::NamedSite{<:AbstractString}) = print(io, "site<\"$(x.id)\">")
 Base.show(io::IO, x::NamedSite{Symbol}) = print(io, "site<:$(x.id)>")
 
-"""
-    MultiSite(a, b, ...)
+# """
+#     MultiSite(a, b, ...)
 
-Represents a site that is a combination of multiple sites. The sites are given as a comma-separated list of [`Site`](@ref) objects.
-"""
-const MultiSite{N,S<:Site} = Site{NTuple{N,S}}
+# Represents a site that is a combination of multiple sites. The sites are given as a comma-separated list of [`Site`](@ref) objects.
+# """
+# const MultiSite{N,S<:Site} = Site{NTuple{N,S}}
 
-MultiSite(sites::Vararg{S,N}) where {N,S<:Site} = Site{NTuple{N,S}}(sites)
+# MultiSite(sites::Vararg{S,N}) where {N,S<:Site} = MultiSite{N,S}(sites)
+# MultiSite(sites::S...) where {S<:Site} = MultiSite{length(sites),S}(sites)
 
-is_site_equal(a::MultiSite, b::MultiSite) = length(a.id) == length(b.id) && all(is_site_equal.(a.id, b.id))
-hassite(site::MultiSite, x) = any(is_site_equal(x, s) for s in site.id)
+# is_site_equal(a::MultiSite, b::MultiSite) = length(a.id) == length(b.id) && all(is_site_equal.(a.id, b.id))
+# hassite(site::MultiSite, x) = any(is_site_equal(x, s) for s in site.id)
 
 # Bond interface
 struct Link{T} <: Tag
