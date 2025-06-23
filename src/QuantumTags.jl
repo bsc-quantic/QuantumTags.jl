@@ -86,7 +86,7 @@ Represents a site that is a combination of multiple sites. The sites are given a
 """
 const MultiSite{N,S<:Site} = Site{NTuple{N,S}}
 
-MultiSite(sites::S...) where {N,S<:Site} = Site{NTuple{N,S}}(sites)
+MultiSite(sites::Vararg{S,N}) where {N,S<:Site} = Site{NTuple{N,S}}(sites)
 
 is_site_equal(a::MultiSite, b::MultiSite) = length(a.id) == length(b.id) && all(is_site_equal.(a.id, b.id))
 hassite(site::MultiSite, x) = any(is_site_equal(x, s) for s in site.id)
