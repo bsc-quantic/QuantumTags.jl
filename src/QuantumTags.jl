@@ -1,9 +1,5 @@
 module QuantumTags
 
-using Compat: @compat
-
-@compat public Tag
-
 export Site, CartesianSite, issite, site, @site_str, is_site_equal
 export Link, islink
 export Bond, isbond, bond, @bond_str, hassite, sites
@@ -15,7 +11,11 @@ abstract type Tag end
 Base.copy(x::Tag) = x
 
 # Site interface
-abstract type Site <: Tag end
+struct Site{T} <: Tag
+    id::T
+end
+
+Base.show(io::IO, x::Site) = print(io, "site<$(x.id)>")
 
 issite(_) = false
 issite(::Tag) = false
@@ -52,25 +52,52 @@ end
 
 Represents a physical site in a Cartesian coordinate system.
 """
-struct CartesianSite{N} <: Site
-    id::NTuple{N,Int}
-end
+const CartesianSite{N} = Site{NTuple{N,Int}}
 
 CartesianSite(site::CartesianSite) = site
-CartesianSite(id::Int) = CartesianSite((id,))
+CartesianSite(id::NTuple{N}) where {N} = CartesianSite{N}(id)
+CartesianSite(id::Int) = Site((id,))
 CartesianSite(id::Vararg{Int,N}) where {N} = CartesianSite(id)
 CartesianSite(id::Base.CartesianIndex) = CartesianSite(Tuple(id))
 
 Base.isless(a::CartesianSite, b::CartesianSite) = a.id < b.id
 Base.ndims(::CartesianSite{N}) where {N} = N
 
-Base.show(io::IO, x::CartesianSite) = print(io, "$(x.id)")
-
 Core.Tuple(x::CartesianSite) = x.id
 Base.CartesianIndex(x::CartesianSite) = CartesianIndex(Tuple(x))
 
+"""
+    NamedSite(name)
+
+Represents a site identified by a name. `name` must be a `AbstractString` or `Symbol`.
+"""
+const NamedSite{S<:Union{<:AbstractString,Symbol}} = Site{S}
+
+NamedSite(name::S) where {S<:Union{<:AbstractString,Symbol}} = Site{S}(name)
+
+Base.string(x::NamedSite) = string(x.id)
+Base.show(io::IO, x::NamedSite{<:AbstractString}) = print(io, "site<\"$(x.id)\">")
+Base.show(io::IO, x::NamedSite{Symbol}) = print(io, "site<:$(x.id)>")
+
+# """
+#     MultiSite(a, b, ...)
+
+# Represents a site that is a combination of multiple sites. The sites are given as a comma-separated list of [`Site`](@ref) objects.
+# """
+# const MultiSite{N,S<:Site} = Site{NTuple{N,S}}
+
+# MultiSite(sites::Vararg{S,N}) where {N,S<:Site} = MultiSite{N,S}(sites)
+# MultiSite(sites::S...) where {S<:Site} = MultiSite{length(sites),S}(sites)
+
+# is_site_equal(a::MultiSite, b::MultiSite) = length(a.id) == length(b.id) && all(is_site_equal.(a.id, b.id))
+# hassite(site::MultiSite, x) = any(is_site_equal(x, s) for s in site.id)
+
 # Bond interface
-abstract type Link <: Tag end
+struct Link{T} <: Tag
+    id::T
+end
+
+Base.show(io::IO, x::Link) = print(io, "link<$(x.id)>")
 
 islink(_) = false
 islink(::Tag) = false
@@ -81,14 +108,19 @@ islink(::Link) = true
 
 Represents a bond between two [`Site`](@ref) objects.
 """
-struct Bond{A,B} <: Link
+struct Bond{A,B} <: Tag
     src::A
     dst::B
 end
 
+Base.show(io::IO, x::Bond) = print(io, "bond<$(x.src) ⟷ $(x.dst)>")
+
 # required for set-like equivalence to work on dictionaries (i.e. )
-Base.hash(bond::Bond, h::UInt) = hash(bond.src, h) ⊻ hash(bond.dst, h)
-Base.:(==)(a::Bond, b::Bond) = a.src == b.src && a.dst == b.dst || a.src == b.dst && a.dst == b.src
+bond_hash(bond::Bond, h::UInt) = hash(bond.src, h) ⊻ hash(bond.dst, h)
+function is_bond_equal(a::Bond, b::Bond)
+    is_site_equal(a.src, b.src) && is_site_equal(a.dst, b.dst) ||
+        is_site_equal(a.src, b.dst) && is_site_equal(a.dst, b.src)
+end
 
 """
     bond"i,j,...-k,l,..."
@@ -112,9 +144,7 @@ isbond(::Bond) = true
 
 bond(x::Bond) = x
 
-Base.show(io::IO, x::Bond) = print(io, "$(x.src) <=> $(x.dst)")
-
-hassite(bond::Bond, x) = x == site(bond.src) || x == site(bond.dst)
+hassite(bond::Bond, x) = is_site_equal(bond.src, x) || is_site_equal(bond.dst, x)
 sites(bond::Bond) = (site(bond.src), site(bond.dst))
 
 Core.Pair(e::Bond) = e.src => e.dst
@@ -156,7 +186,7 @@ Base.last(bond::Bond) = bond.dst
 
 Represents a physical index related to a [`Site`](@ref) with an annotation of input or output.
 """
-Base.@kwdef struct Plug{S} <: Link
+Base.@kwdef struct Plug{S} <: Tag
     site::S
     isdual::Bool = false
 end
@@ -166,6 +196,8 @@ Plug(id::Int; kwargs...) = Plug(CartesianSite(id); kwargs...)
 Plug(@nospecialize(id::NTuple{N,Int}); kwargs...) where {N} = Plug(CartesianSite(id); kwargs...)
 Plug(@nospecialize(id::Vararg{Int,N}); kwargs...) where {N} = Plug(CartesianSite(id); kwargs...)
 Plug(@nospecialize(id::CartesianIndex); kwargs...) = Plug(CartesianSite(id); kwargs...)
+
+Base.show(io::IO, x::Plug) = print(io, "plug<$(site(x))$(isdual(x) ? "'" : "")>")
 
 isplug(_) = false
 isplug(::Tag) = false
@@ -177,9 +209,7 @@ plug(x::Plug) = x
 
 is_plug_equal(x, y) = isplug(x) && isplug(y) ? plug(x) == plug(y) : false
 
-Base.adjoint(x::Plug) = Plug(site(x); isdual=!isdual(x))
-
-Base.show(io::IO, x::Plug) = print(io, "$(site(x))$(isdual(x) ? "'" : "")")
+Base.adjoint(x::Plug) = Plug(site(x); isdual=(!isdual(x)))
 
 """
     plug"i,j,...[']"
@@ -193,7 +223,7 @@ macro plug_str(str)
     isdual = endswith(str, '\'')
     str = chopsuffix(str, "'")
     site_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, str)
-    return :(Plug($(site_expr); isdual=$isdual))
+    return :(Plug($(site_expr); isdual=($isdual)))
 end
 
 end # module QuantumTags
