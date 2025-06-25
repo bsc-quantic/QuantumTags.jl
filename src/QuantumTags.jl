@@ -1,9 +1,11 @@
 module QuantumTags
 
-export Site, CartesianSite, issite, site, @site_str, is_site_equal
+using MacroTools
+
+export Site, CartesianSite, issite, site, @site, @site_str, is_site_equal
 export Link, islink
-export Bond, isbond, bond, @bond_str, hassite, sites
-export Plug, isplug, plug, isdual, @plug_str, is_plug_equal
+export Bond, isbond, bond, @bond, @bond_str, hassite, sites
+export Plug, isplug, plug, isdual, @plug, @plug_str, is_plug_equal
 
 abstract type Tag end
 
@@ -26,6 +28,14 @@ is_site_equal(x, y) = issite(x) && issite(y) ? site(x) == site(y) : false
 function site end
 site(x::Site) = x
 
+dispatch_site_constructor(x::Site) = x
+dispatch_site_constructor(x::Symbol) = NamedSite(x)
+dispatch_site_constructor(x::AbstractString) = NamedSite(x)
+dispatch_site_constructor(x::Int) = CartesianSite(x)
+dispatch_site_constructor(x::NTuple{N,Int}) where {N} = CartesianSite(x)
+dispatch_site_constructor(x::Vararg{Int,N}) where {N} = CartesianSite(x)
+dispatch_site_constructor(x::Base.CartesianIndex) = CartesianSite(Tuple(x))
+
 """
     site"i,j,..."
 
@@ -33,17 +43,15 @@ Constructs a [`CartesianSite`](@ref) object with the given coordinates. The coor
 """
 macro site_str(str)
     expr = Meta.parse(str)
+    esc(:(@site $expr))
+end
 
-    # shortcut for 1-dim sites (e.g. `site"1"`)
-    if expr isa Int
-        return :(CartesianSite($expr))
-    elseif expr isa Symbol
-        return :(CartesianSite($(esc(expr))))
-    elseif Meta.isexpr(expr, :tuple)
-        return :(CartesianSite($(map(esc, expr.args)...)))
-    else
-        throw(ArgumentError("Invalid site string"))
+macro site(expr)
+    expr = MacroTools.postwalk(expr) do x
+        Meta.isexpr(x, :$) ? esc(only(x.args)) : x
     end
+
+    return :(dispatch_site_constructor($expr))
 end
 
 """
@@ -129,13 +137,17 @@ Constructs a [`Bond`](@ref) object.
 [`Site`](@ref)s are given as a comma-separated list of integers, and source and destination sites are separated by a `-`.
 """
 macro bond_str(str)
-    m = match(r"([\w,]+)[-]([\w,]+)", str)
-    @assert length(m.captures) == 2
-    src = m.captures[1]
-    dst = m.captures[2]
-    src_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, src)
-    dst_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, dst)
-    return :(Bond($src_expr, $dst_expr))
+    expr = Meta.parse(str)
+    if !(Meta.isexpr(expr, :call) && expr.args[1] == :-)
+        throw(
+            ArgumentError(
+                "Bond string must be in the form 'src-dst', where src and dst are site strings acceptable for @site_str.",
+            ),
+        )
+    end
+
+    src, dst = expr.args[2:end]
+    return esc(:(Bond(@site($src), @site($dst))))
 end
 
 isbond(_) = false
