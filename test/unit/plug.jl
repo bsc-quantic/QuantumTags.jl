@@ -1,5 +1,6 @@
 using Test
 using QuantumTags
+using QuantumTags: site
 
 s = Plug(1)
 @test site(s) == site"1"

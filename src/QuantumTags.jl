@@ -2,22 +2,18 @@ module QuantumTags
 
 using MacroTools
 
-export Site, CartesianSite, issite, site, @site, @site_str, is_site_equal
-export Link, islink
-export Bond, isbond, bond, @bond, @bond_str, hassite, sites
-export Plug, isplug, plug, isdual, @plug, @plug_str, is_plug_equal
+export Site, @site, @site_str, is_site_equal, issite
+export CartesianSite, NamedSite
+export Bond, @bond, @bond_str, is_bond_equal, isbond
+export Plug, @plug, @plug_str, is_plug_equal, isplug
+export isdual, isinput, isoutput
 
 abstract type Tag end
 
 # TODO checkout whether this is a good idea
 Base.copy(x::Tag) = x
 
-# Site interface
-struct Site{T} <: Tag
-    id::T
-end
-
-Base.show(io::IO, x::Site) = print(io, "site<$(x.id)>")
+abstract type Site <: Tag end
 
 issite(_) = false
 issite(::Tag) = false
@@ -60,13 +56,17 @@ end
 
 Represents a physical site in a Cartesian coordinate system.
 """
-const CartesianSite{N} = Site{NTuple{N,Int}}
+struct CartesianSite{N} <: Site
+    id::NTuple{N,Int}
+end
 
 CartesianSite(site::CartesianSite) = site
 CartesianSite(id::NTuple{N}) where {N} = CartesianSite{N}(id)
-CartesianSite(id::Int) = Site((id,))
+CartesianSite(id::Int) = CartesianSite((id,))
 CartesianSite(id::Vararg{Int,N}) where {N} = CartesianSite(id)
 CartesianSite(id::Base.CartesianIndex) = CartesianSite(Tuple(id))
+
+Base.show(io::IO, x::CartesianSite) = print(io, "site<$(x.id)>")
 
 Base.isless(a::CartesianSite, b::CartesianSite) = a.id < b.id
 Base.ndims(::CartesianSite{N}) where {N} = N
@@ -79,9 +79,9 @@ Base.CartesianIndex(x::CartesianSite) = CartesianIndex(Tuple(x))
 
 Represents a site identified by a name. `name` must be a `AbstractString` or `Symbol`.
 """
-const NamedSite{S<:Union{<:AbstractString,Symbol}} = Site{S}
-
-NamedSite(name::S) where {S<:Union{<:AbstractString,Symbol}} = Site{S}(name)
+struct NamedSite{S<:Union{<:AbstractString,Symbol}} <: Site
+    id::S
+end
 
 Base.string(x::NamedSite) = string(x.id)
 Base.show(io::IO, x::NamedSite{<:AbstractString}) = print(io, "site<\"$(x.id)\">")
@@ -100,12 +100,7 @@ Base.show(io::IO, x::NamedSite{Symbol}) = print(io, "site<:$(x.id)>")
 # is_site_equal(a::MultiSite, b::MultiSite) = length(a.id) == length(b.id) && all(is_site_equal.(a.id, b.id))
 # hassite(site::MultiSite, x) = any(is_site_equal(x, s) for s in site.id)
 
-# Bond interface
-struct Link{T} <: Tag
-    id::T
-end
-
-Base.show(io::IO, x::Link) = print(io, "link<$(x.id)>")
+abstract type Link <: Tag end
 
 islink(_) = false
 islink(::Tag) = false
@@ -116,7 +111,7 @@ islink(::Link) = true
 
 Represents a bond between two [`Site`](@ref) objects.
 """
-struct Bond{A,B} <: Tag
+struct Bond{A,B} <: Link
     src::A
     dst::B
 end
@@ -191,14 +186,13 @@ Base.isdone(::Bond, state) = state == 2
 Base.first(bond::Bond) = bond.src
 Base.last(bond::Bond) = bond.dst
 
-# Plug interface
 """
     Plug(id[; dual = false])
     Plug(i, j, ...[; dual = false])
 
 Represents a physical index related to a [`Site`](@ref) with an annotation of input or output.
 """
-Base.@kwdef struct Plug{S} <: Tag
+Base.@kwdef struct Plug{S} <: Link
     site::S
     isdual::Bool = false
 end
@@ -214,6 +208,7 @@ Base.show(io::IO, x::Plug) = print(io, "plug<$(site(x))$(isdual(x) ? "'" : "")>"
 isplug(_) = false
 isplug(::Tag) = false
 isplug(::Plug) = true
+
 isdual(x::Plug) = x.isdual
 
 site(x::Plug) = x.site
