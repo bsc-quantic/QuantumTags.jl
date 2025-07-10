@@ -110,6 +110,11 @@ islink(::Link) = true
     Bond(src, dst)
 
 Represents a bond between two [`Site`](@ref) objects.
+
+!!! info
+
+    In order to use `Bond` whithin a set-like context (e.g. as a key in a dictionary), it implements `isequal` and `hash` for set-like equivalence.
+    This means that `isequal(bond"1-2", bond"2-1")` and `hash(bond"1-2", bond"2-1")` are `true`, but `bond"1-2" == bond"2-1"` is `false`.
 """
 struct Bond{S} <: Link
     src::S
@@ -136,7 +141,8 @@ function is_bond_equal(a::Bond, b::Bond)
 end
 
 """
-    bond"i,j,...-k,l,..."
+    bond"i-j"
+    bond"(i,j,...)-(k,l,...)"
 
 Constructs a [`Bond`](@ref) object.
 [`Site`](@ref)s are given as a comma-separated list of integers, and source and destination sites are separated by a `-`.
