@@ -129,7 +129,7 @@ function Base.hash(b::Bond, h::UInt)
 end
 
 # required for set-like equivalence to work on dictionaries (i.e. )
-@deprecate bond_hash(bond::Bond, h::UInt) = hash(bond, h)
+@deprecate bond_hash(bond::Bond, h::UInt) hash(bond, h)
 function is_bond_equal(a::Bond, b::Bond)
     is_site_equal(a.src, b.src) && is_site_equal(a.dst, b.dst) ||
         is_site_equal(a.src, b.dst) && is_site_equal(a.dst, b.src)
