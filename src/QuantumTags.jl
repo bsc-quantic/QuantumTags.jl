@@ -111,15 +111,25 @@ islink(::Link) = true
 
 Represents a bond between two [`Site`](@ref) objects.
 """
-struct Bond{A,B} <: Link
-    src::A
-    dst::B
+struct Bond{S} <: Link
+    src::S
+    dst::S
 end
 
 Base.show(io::IO, x::Bond) = print(io, "bond<$(x.src) ⟷ $(x.dst)>")
+Base.isequal(a::Bond, b::Bond) = is_bond_equal(a, b)
+
+# NOTE taken from `set.jl`: this is like `hash` method for `AbstractSet`
+const hashs_seed = UInt === UInt64 ? 0x852ada37cfe8e0ce : 0xcfe8e0ce
+function Base.hash(b::Bond, h::UInt)
+    hv = hashs_seed
+    hv ⊻= hash(b.src)
+    hv ⊻= hash(b.dst)
+    hash(hv, h)
+end
 
 # required for set-like equivalence to work on dictionaries (i.e. )
-bond_hash(bond::Bond, h::UInt) = hash(bond.src, h) ⊻ hash(bond.dst, h)
+@deprecate bond_hash(bond::Bond, h::UInt) = hash(bond, h)
 function is_bond_equal(a::Bond, b::Bond)
     is_site_equal(a.src, b.src) && is_site_equal(a.dst, b.dst) ||
         is_site_equal(a.src, b.dst) && is_site_equal(a.dst, b.src)
