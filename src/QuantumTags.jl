@@ -19,6 +19,13 @@ issite(::T) where {T} = issite(T)
 issite(::Type) = false
 issite(::Type{<:Site}) = true
 
+struct LayerSite{S<:Site,L} <: Site
+    id::S
+    layer::L
+end
+
+Base.show(io::IO, x::LayerSite) = print(io, "$(x.id) @ $(x.layer)")
+
 abstract type Link <: Tag end
 
 islink(::T) where {T} = islink(T)
