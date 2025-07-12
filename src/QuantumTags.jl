@@ -28,9 +28,7 @@ end
 site(x::LayerSite) = site(x.id)
 layer(x::LayerSite) = x.layer
 
-Base.show(io::IO, x::LayerSite) = print(io, "$(x.id) at $(x.layer)")
-Base.show(io::IO, x::LayerSite{S,L}) where {S,L<:Symbol} = print(io, "$(x.id) at :$(x.layer)")
-Base.show(io::IO, x::LayerSite{S,L}) where {S,L<:AbstractString} = print(io, "$(x.id) at \"$(x.layer)\"")
+Base.show(io::IO, x::LayerSite) = print(io, "$(x.id) at $(repr(x.layer))")
 
 abstract type Link <: Tag end
 
@@ -51,6 +49,8 @@ end
 bond(x::LayerLink) = bond(x.link)
 layer(x::LayerLink) = x.layer
 
+Base.show(io::IO, x::LayerLink) = print(io, "$(x.link) at $(repr(x.layer))")
+
 # e.g. a closed plug between two layers
 struct InterLayerLink{S,IL} <: Link
     site::S
@@ -59,5 +59,7 @@ end
 
 site(x::InterLayerLink) = site(x.site)
 layers(x::InterLayerLink) = x.cut
+
+Base.show(io::IO, x::InterLayerLink) = print(io, "$(x.site) at $(x.cut)")
 
 end # module QuantumTags
