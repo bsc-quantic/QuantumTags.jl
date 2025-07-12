@@ -7,6 +7,7 @@ export SimpleBond
 export Plug, @plug, @plug_str, is_plug_equal, isplug
 export SimplePlug
 export isdual, isinput, isoutput
+export LayerSite, LayerLink, layer, layers
 
 abstract type Tag end
 
