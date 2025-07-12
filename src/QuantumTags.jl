@@ -24,7 +24,12 @@ struct LayerSite{S<:Site,L} <: Site
     layer::L
 end
 
-Base.show(io::IO, x::LayerSite) = print(io, "$(x.id) @ $(x.layer)")
+site(x::LayerSite) = site(x.id)
+layer(x::LayerSite) = x.layer
+
+Base.show(io::IO, x::LayerSite) = print(io, "$(x.id) at $(x.layer)")
+Base.show(io::IO, x::LayerSite{S,L}) where {S,L<:Symbol} = print(io, "$(x.id) at :$(x.layer)")
+Base.show(io::IO, x::LayerSite{S,L}) where {S,L<:AbstractString} = print(io, "$(x.id) at \"$(x.layer)\"")
 
 abstract type Link <: Tag end
 
