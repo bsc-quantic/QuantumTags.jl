@@ -27,6 +27,7 @@ end
 
 site(x::LayerSite) = site(x.id)
 layer(x::LayerSite) = x.layer
+is_site_equal(a::LayerSite, b::LayerSite) = is_site_equal(a.id, b.id) && a.layer == b.layer
 
 Base.isequal(a::LayerSite, b::LayerSite) = isequal(a.id, b.id) && isequal(a.layer, b.layer)
 Base.show(io::IO, x::LayerSite) = print(io, "$(x.id) at $(repr(x.layer))")
