@@ -41,4 +41,22 @@ include("Site.jl")
 include("Bond.jl")
 include("Plug.jl")
 
+# e.g. a `Bond` on a layer
+struct LayerLink{Li<:Link,La} <: Link
+    link::Li
+    layer::La
+end
+
+bond(x::LayerLink) = bond(x.link)
+layer(x::LayerLink) = x.layer
+
+# e.g. a closed plug between two layers
+struct InterLayerLink{S,IL} <: Link
+    site::S
+    cut::IL
+end
+
+site(x::InterLayerLink) = site(x.site)
+layers(x::InterLayerLink) = x.cut
+
 end # module QuantumTags
