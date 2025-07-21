@@ -5,6 +5,7 @@ using MacroTools
 export Site, @site, @site_str, is_site_equal, issite
 export CartesianSite, NamedSite
 export Bond, @bond, @bond_str, is_bond_equal, isbond
+export SimpleBond
 export Plug, @plug, @plug_str, is_plug_equal, isplug
 export isdual, isinput, isoutput
 
@@ -107,44 +108,92 @@ islink(::Tag) = false
 islink(::Link) = true
 
 """
-    Bond(src, dst)
+    Bond <: Link
+
+Represents a bond between two [`Site`](@ref) objects.
+
+## Interface
+
+  - `isbond`
+  - `bond`
+  - `sites`
+  - `hassite`
+  - `is_bond_equal`
+"""
+abstract type Bond <: Link end
+
+isbond(::T) where {T} = isbond(T)
+isbond(::Type) = false
+isbond(::Type{<:Bond}) = true
+
+bond(b::Bond) = b
+
+hassite(bond::Bond, _site) = any(Base.Fix1(is_site_equal, _site), sites(bond))
+
+# required for set-like equivalence to work on dictionaries (i.e. )
+@deprecate bond_hash(bond::Bond, h::UInt) hash(bond, h)
+
+function is_bond_equal(a::Bond, b::Bond)
+    s1a, s2a = sites(a)
+    s1b, s2b = sites(b)
+    is_site_equal(s1a, s1b) && is_site_equal(s2a, s2b) || is_site_equal(s1a, s2b) && is_site_equal(s2a, s1b)
+end
+
+Core.Pair(bond::Bond) = Pair(sites(bond)...)
+Core.Tuple(bond::Bond) = Tuple(sites(bond))
+
+Base.IteratorSize(::Type{<:Bond}) = Base.HasLength()
+Base.length(bond::Bond) = length(sites(bond))
+Base.IteratorEltype(::Type{<:Bond}) = Base.HasEltype()
+Base.eltype(bond::Bond) = eltype(sites(bond))
+Base.isdone(bond::Bond, state) = isdone(bond, state)
+
+Base.first(bond::Bond) = first(sites(bond))
+Base.last(bond::Bond) = last(sites(bond))
+
+Base.getindex(bond::Bond, i) = getindex(sites(bond), i)
+Base.iterate(bond::Bond) = iterate(sites(bond))
+Base.iterate(bond::Bond, state) = iterate(sites(bond), state)
+
+"""
+    SimpleBond(src, dst)
 
 Represents a bond between two [`Site`](@ref) objects.
 
 !!! info
 
-    In order to use `Bond` whithin a set-like context (e.g. as a key in a dictionary), it implements `isequal` and `hash` for set-like equivalence.
+    In order to use `SimpleBond` whithin a set-like context (e.g. as a key in a dictionary), it implements `isequal` and `hash` for set-like equivalence.
     This means that `isequal(bond"1-2", bond"2-1")` and `hash(bond"1-2", bond"2-1")` are `true`, but `bond"1-2" == bond"2-1"` is `false`.
 """
-struct Bond{S} <: Link
-    src::S
-    dst::S
+struct SimpleBond{S} <: Bond
+    sites::NTuple{2,S}
 end
 
-Base.show(io::IO, x::Bond) = print(io, "bond<$(x.src) ⟷ $(x.dst)>")
-Base.isequal(a::Bond, b::Bond) = is_bond_equal(a, b)
+SimpleBond(a, b) = SimpleBond((a, b))
+@deprecate Bond(a::Site, b::Site) SimpleBond(a, b) true
+
+Base.show(io::IO, x::SimpleBond) = print(io, "bond<$(x.sites[1]) ⟷ $(x.sites[2])>")
+Base.isequal(a::SimpleBond, b::SimpleBond) = is_bond_equal(a, b)
 
 # NOTE taken from `set.jl`: this is like `hash` method for `AbstractSet`
 const hashs_seed = UInt === UInt64 ? 0x852ada37cfe8e0ce : 0xcfe8e0ce
 function Base.hash(b::Bond, h::UInt)
     hv = hashs_seed
-    hv ⊻= hash(b.src)
-    hv ⊻= hash(b.dst)
+    hv ⊻= hash(b.sites[1])
+    hv ⊻= hash(b.sites[2])
     hash(hv, h)
 end
 
-# required for set-like equivalence to work on dictionaries (i.e. )
-@deprecate bond_hash(bond::Bond, h::UInt) hash(bond, h)
-function is_bond_equal(a::Bond, b::Bond)
-    is_site_equal(a.src, b.src) && is_site_equal(a.dst, b.dst) ||
-        is_site_equal(a.src, b.dst) && is_site_equal(a.dst, b.src)
-end
+hassite(bond::SimpleBond, x) = is_site_equal(bond.sites[1], x) || is_site_equal(bond.sites[2], x)
+sites(bond::SimpleBond) = site.(bond.sites)
+
+dispatch_bond_constructor(a, b) = SimpleBond(a, b)
 
 """
     bond"i-j"
     bond"(i,j,...)-(k,l,...)"
 
-Constructs a [`Bond`](@ref) object.
+Constructs a [`SimpleBond`](@ref) object.
 [`Site`](@ref)s are given as a comma-separated list of integers, and source and destination sites are separated by a `-`.
 """
 macro bond_str(str)
@@ -158,49 +207,8 @@ macro bond_str(str)
     end
 
     src, dst = expr.args[2:end]
-    return esc(:(Bond(@site($src), @site($dst))))
+    return esc(:($dispatch_bond_constructor(@site($src), @site($dst))))
 end
-
-isbond(_) = false
-isbond(::Tag) = false
-isbond(::Bond) = true
-
-bond(x::Bond) = x
-
-hassite(bond::Bond, x) = is_site_equal(bond.src, x) || is_site_equal(bond.dst, x)
-sites(bond::Bond) = (site(bond.src), site(bond.dst))
-
-Core.Pair(e::Bond) = e.src => e.dst
-Core.Tuple(e::Bond) = (e.src, e.dst)
-
-function Base.getindex(bond::Bond, i::Int)
-    if i == 1
-        return bond.src
-    elseif i == 2
-        return bond.dst
-    else
-        throw(BoundsError(bond, i))
-    end
-end
-
-function Base.iterate(bond::Bond, state=0)
-    if state == 0
-        (bond.src, 1)
-    elseif state == 1
-        (bond.dst, 2)
-    else
-        nothing
-    end
-end
-
-Base.IteratorSize(::Type{<:Bond}) = Base.HasLength()
-Base.length(::Bond) = 2
-Base.IteratorEltype(::Type{Bond{L}}) where {L} = Base.HasEltype()
-Base.eltype(::Bond{L}) where {L} = L
-Base.isdone(::Bond, state) = state == 2
-
-Base.first(bond::Bond) = bond.src
-Base.last(bond::Bond) = bond.dst
 
 """
     Plug(id[; dual = false])
