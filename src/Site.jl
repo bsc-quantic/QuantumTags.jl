@@ -87,19 +87,19 @@ Base.show(io::IO, x::NamedSite{Symbol}) = print(io, "site<:$(x.id)>")
 # hassite(site::MultiSite, x) = any(is_site_equal(x, s) for s in site.id)
 
 struct LayerSite{S<:Site,L<:Layer} <: Site
-    id::S
+    site::S
     layer::L
 end
 
-LayerSite(id::S, layer::T) where {S<:Site,T} = LayerSite{S,Layer{T}}(id, Layer(layer))
+LayerSite(site, layer) = LayerSite(site, Layer(layer))
 
-site(x::LayerSite) = site(x.id)
+site(x::LayerSite) = site(x.site)
 layer(x::LayerSite) = layer(partition(x))
 partition(x::LayerSite) = x.layer
 
 # TODO revise this
-is_site_equal(a::LayerSite, b::LayerSite) = is_site_equal(a.id, b.id)
+is_site_equal(a::LayerSite, b::LayerSite) = is_site_equal(a.site, b.site)
 is_layer_equal(a::LayerSite, b::LayerSite) = isequal(a.layer, b.layer)
 
 Base.isequal(a::LayerSite, b::LayerSite) = is_site_equal(a, b)
-Base.show(io::IO, x::LayerSite) = print(io, "$(x.id) at $(repr(layer(x)))")
+Base.show(io::IO, x::LayerSite) = print(io, "$(x.site) at $(repr(layer(x)))")

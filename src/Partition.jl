@@ -10,6 +10,12 @@ struct Layer{T} <: Partition
     id::T
 end
 
+Layer(x::Layer) = x
+
+islayer(::T) where {T} = islayer(T)
+islayer(::Type) = false
+islayer(::Type{<:Layer}) = true
+
 layer(x::Layer) = x
 layers(x::Layer) = (x,)
 
@@ -22,6 +28,15 @@ struct InterLayer{A<:Layer,B<:Layer} <: Partition
     dst::B
 end
 
+InterLayer(x::InterLayer) = x
+InterLayer(x::Tuple) = InterLayer(Layer.(x)...)
+InterLayer(x::Pair) = InterLayer(Layer(first(x)), Layer(last(x)))
+
+isinterlayer(::T) where {T} = isinterlayer(T)
+isinterlayer(::Type) = false
+isinterlayer(::Type{<:InterLayer}) = true
+
+interlayer(x::InterLayer) = x
 layers(x::InterLayer) = (x.src, x.dst)
 
 Base.show(io::IO, x::InterLayer) = print(io, "interlayer<$(x.src) ⟷ $(x.dst)>")

@@ -111,10 +111,12 @@ struct LayerBond{B<:Bond,L<:Layer} <: Bond
     layer::L
 end
 
+LayerBond(bond, layer) = LayerBond(bond, Layer(layer))
+
 sites(x::LayerBond) = LayerSite.(sites(x.bond), (x.layer,))
 bond(x::LayerBond) = bond(x.bond)
-partition(x::LayerBond) = x.partition
-layer(x::LayerBond) = layer(partition(x))
+partition(x::LayerBond) = layer(x)
+layer(x::LayerBond) = layer(x.layer)
 
 isbond(x::LayerBond) = isbond(x.bond)
 isplug(x::LayerBond) = isplug(x.bond)
@@ -126,6 +128,8 @@ struct InterLayerBond{S<:Site,IL<:InterLayer} <: Bond
     site::S
     cut::IL
 end
+
+InterLayerBond(site, cut) = InterLayerBond(site, InterLayer(cut))
 
 site(x::InterLayerBond) = site(x.site)
 sites(x::InterLayerBond) = LayerSite.((site(x),), layers(x.cut))
