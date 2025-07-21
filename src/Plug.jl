@@ -1,34 +1,65 @@
 """
-    Plug(id[; dual = false])
-    Plug(i, j, ...[; dual = false])
+    Plug <: Link
+
+Represents a physical index related to a [`Site`](@ref) with an annotation of input or output.
+
+## Interface
+
+    - `isplug`
+    - `plug`
+    - `site`
+    - `hassite`
+    - `isdual`
+    - `is_plug_equal`
+    - `Base.adjoint`
+    - `Base.reverse`
+"""
+abstract type Plug <: Link end
+
+isplug(::T) where {T} = isplug(T)
+isplug(::Type) = false
+isplug(::Type{<:Plug}) = true
+
+plug(p::Plug) = p
+
+hassite(plug::Plug, _site) = is_site_equal(site(plug), _site)
+function is_plug_equal(x, y)
+    if !(isplug(x) && isplug(y))
+        return false
+    end
+    return is_site_equal(site(x), site(y)) && isdual(x) == isdual(y)
+end
+
+function Base.show(io::IO, x::Plug)
+    print(io, "plug<")
+    print(io, site(x))
+    isdual(x) && print(io, "'")
+    print(io, ">")
+end
+
+"""
+    SimplePlug(id[; dual = false])
+    SimplePlug(i, j, ...[; dual = false])
 
 Represents a physical index related to a [`Site`](@ref) with an annotation of input or output.
 """
-Base.@kwdef struct Plug{S} <: Link
+Base.@kwdef struct SimplePlug{S} <: Plug
     site::S
     isdual::Bool = false
 end
 
-Plug(site::S; kwargs...) where {S} = Plug{S}(; site, kwargs...)
-Plug(id::Int; kwargs...) = Plug(CartesianSite(id); kwargs...)
-Plug(@nospecialize(id::NTuple{N,Int}); kwargs...) where {N} = Plug(CartesianSite(id); kwargs...)
-Plug(@nospecialize(id::Vararg{Int,N}); kwargs...) where {N} = Plug(CartesianSite(id); kwargs...)
-Plug(@nospecialize(id::CartesianIndex); kwargs...) = Plug(CartesianSite(id); kwargs...)
+SimplePlug(site::S; kwargs...) where {S} = SimplePlug{S}(; site, kwargs...)
+SimplePlug(id::Int; kwargs...) = SimplePlug(CartesianSite(id); kwargs...)
+SimplePlug(@nospecialize(id::NTuple{N,Int}); kwargs...) where {N} = SimplePlug(CartesianSite(id); kwargs...)
+SimplePlug(@nospecialize(id::Vararg{Int,N}); kwargs...) where {N} = SimplePlug(CartesianSite(id); kwargs...)
+SimplePlug(@nospecialize(id::CartesianIndex); kwargs...) = SimplePlug(CartesianSite(id); kwargs...)
+@deprecate Plug(args...; kwargs...) SimplePlug(args...; kwargs...) true
 
-Base.show(io::IO, x::Plug) = print(io, "plug<$(site(x))$(isdual(x) ? "'" : "")>")
+site(p::SimplePlug) = p.site
+isdual(p::SimplePlug) = p.isdual
 
-isplug(_) = false
-isplug(::Tag) = false
-isplug(::Plug) = true
-
-isdual(x::Plug) = x.isdual
-
-site(x::Plug) = x.site
-plug(x::Plug) = x
-
-is_plug_equal(x, y) = isplug(x) && isplug(y) ? plug(x) == plug(y) : false
-
-Base.adjoint(x::Plug) = Plug(site(x); isdual=(!isdual(x)))
+Base.adjoint(p::SimplePlug) = SimplePlug(site(p); isdual=(!isdual(p)))
+Base.reverse(p::SimplePlug) = adjoint(p)
 
 """
     plug"i,j,...[']"
@@ -42,5 +73,5 @@ macro plug_str(str)
     isdual = endswith(str, '\'')
     str = chopsuffix(str, "'")
     site_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, str)
-    return :(Plug($(site_expr); isdual=($isdual)))
+    return :(SimplePlug($(site_expr); isdual=($isdual)))
 end

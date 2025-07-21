@@ -2,19 +2,19 @@ using Test
 using QuantumTags
 using QuantumTags: site
 
-s = Plug(1)
+s = SimplePlug(1)
 @test site(s) == site"1"
 @test isdual(s) == false
 
-s = Plug(1; isdual=true)
+s = SimplePlug(1; isdual=true)
 @test site(s) == site"1"
 @test isdual(s) == true
 
-s = Plug(1, 2)
+s = SimplePlug(1, 2)
 @test site(s) == site"1, 2"
 @test isdual(s) == false
 
-s = Plug(1, 2; isdual=true)
+s = SimplePlug(1, 2; isdual=true)
 @test site(s) == site"1, 2"
 @test isdual(s) == true
 

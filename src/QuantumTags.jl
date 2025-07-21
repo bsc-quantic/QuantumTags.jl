@@ -5,6 +5,7 @@ export CartesianSite, NamedSite
 export Bond, @bond, @bond_str, is_bond_equal, isbond
 export SimpleBond
 export Plug, @plug, @plug_str, is_plug_equal, isplug
+export SimplePlug
 export isdual, isinput, isoutput
 
 abstract type Tag end
