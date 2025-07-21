@@ -46,6 +46,12 @@ Base.getindex(bond::Bond, i) = getindex(sites(bond), i)
 Base.iterate(bond::Bond) = iterate(sites(bond))
 Base.iterate(bond::Bond, state) = iterate(sites(bond), state)
 
+function Base.show(io::IO, x::Bond)
+    print(io, "bond<")
+    print(io, join(sites(x), " ⟷ "))
+    print(io, ">")
+end
+
 """
     SimpleBond(src, dst)
 
@@ -63,7 +69,6 @@ end
 SimpleBond(a, b) = SimpleBond((a, b))
 @deprecate Bond(a::Site, b::Site) SimpleBond(a, b) true
 
-Base.show(io::IO, x::SimpleBond) = print(io, "bond<$(x.sites[1]) ⟷ $(x.sites[2])>")
 Base.isequal(a::SimpleBond, b::SimpleBond) = is_bond_equal(a, b)
 
 # NOTE taken from `set.jl`: this is like `hash` method for `AbstractSet`
