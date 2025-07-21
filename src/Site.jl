@@ -1,7 +1,14 @@
 using MacroTools
 
-is_site_equal(x, y) = issite(x) && issite(y) ? site(x) == site(y) : false
+abstract type Site <: Tag end
+
+issite(::T) where {T} = issite(T)
+issite(::Type) = false
+issite(::Type{<:Site}) = true
+
 site(x::Site) = x
+
+is_site_equal(x, y) = issite(x) && issite(y) ? site(x) == site(y) : false
 
 dispatch_site_constructor(x::Site) = x
 dispatch_site_constructor(x::Symbol) = NamedSite(x)
@@ -78,3 +85,21 @@ Base.show(io::IO, x::NamedSite{Symbol}) = print(io, "site<:$(x.id)>")
 
 # is_site_equal(a::MultiSite, b::MultiSite) = length(a.id) == length(b.id) && all(is_site_equal.(a.id, b.id))
 # hassite(site::MultiSite, x) = any(is_site_equal(x, s) for s in site.id)
+
+struct LayerSite{S<:Site,L<:Layer} <: Site
+    site::S
+    layer::L
+end
+
+LayerSite(site, layer) = LayerSite(site, Layer(layer))
+
+site(x::LayerSite) = site(x.site)
+layer(x::LayerSite) = layer(partition(x))
+partition(x::LayerSite) = x.layer
+
+# TODO revise this
+is_site_equal(a::LayerSite, b::LayerSite) = is_site_equal(a.site, b.site)
+is_layer_equal(a::LayerSite, b::LayerSite) = isequal(a.layer, b.layer)
+
+Base.isequal(a::LayerSite, b::LayerSite) = is_site_equal(a, b)
+Base.show(io::IO, x::LayerSite) = print(io, "$(x.site) at $(repr(layer(x)))")

@@ -52,6 +52,29 @@ function Base.show(io::IO, x::Bond)
     print(io, ">")
 end
 
+dispatch_bond_constructor(a, b) = SimpleBond(a, b)
+
+"""
+    bond"i-j"
+    bond"(i,j,...)-(k,l,...)"
+
+Constructs a [`SimpleBond`](@ref) object.
+[`Site`](@ref)s are given as a comma-separated list of integers, and source and destination sites are separated by a `-`.
+"""
+macro bond_str(str)
+    expr = Meta.parse(str)
+    if !(Meta.isexpr(expr, :call) && expr.args[1] == :-)
+        throw(
+            ArgumentError(
+                "Bond string must be in the form 'src-dst', where src and dst are site strings acceptable for @site_str.",
+            ),
+        )
+    end
+
+    src, dst = expr.args[2:end]
+    return esc(:($dispatch_bond_constructor(@site($src), @site($dst))))
+end
+
 """
     SimpleBond(src, dst)
 
@@ -83,25 +106,33 @@ end
 hassite(bond::SimpleBond, x) = is_site_equal(bond.sites[1], x) || is_site_equal(bond.sites[2], x)
 sites(bond::SimpleBond) = site.(bond.sites)
 
-dispatch_bond_constructor(a, b) = SimpleBond(a, b)
-
-"""
-    bond"i-j"
-    bond"(i,j,...)-(k,l,...)"
-
-Constructs a [`SimpleBond`](@ref) object.
-[`Site`](@ref)s are given as a comma-separated list of integers, and source and destination sites are separated by a `-`.
-"""
-macro bond_str(str)
-    expr = Meta.parse(str)
-    if !(Meta.isexpr(expr, :call) && expr.args[1] == :-)
-        throw(
-            ArgumentError(
-                "Bond string must be in the form 'src-dst', where src and dst are site strings acceptable for @site_str.",
-            ),
-        )
-    end
-
-    src, dst = expr.args[2:end]
-    return esc(:($dispatch_bond_constructor(@site($src), @site($dst))))
+struct LayerBond{B<:Bond,L<:Layer} <: Bond
+    bond::B
+    layer::L
 end
+
+LayerBond(bond, layer) = LayerBond(bond, Layer(layer))
+
+sites(x::LayerBond) = LayerSite.(sites(x.bond), (x.layer,))
+bond(x::LayerBond) = bond(x.bond)
+partition(x::LayerBond) = layer(x)
+layer(x::LayerBond) = layer(x.layer)
+
+isbond(x::LayerBond) = isbond(x.bond)
+isplug(x::LayerBond) = isplug(x.bond)
+
+Base.isequal(a::LayerBond, b::LayerBond) = isequal(a.bond, b.bond) && isequal(partition(a), partition(b))
+
+# e.g. a closed plug between two same sites on different layers
+struct InterLayerBond{S<:Site,IL<:InterLayer} <: Bond
+    site::S
+    cut::IL
+end
+
+InterLayerBond(site, cut) = InterLayerBond(site, InterLayer(cut))
+
+site(x::InterLayerBond) = site(x.site)
+sites(x::InterLayerBond) = LayerSite.((site(x),), layers(x.cut))
+layers(x::InterLayerBond) = layers(x.cut)
+
+Base.isequal(a::InterLayerBond, b::InterLayerBond) = isequal(a.site, b.site) && isequal(a.cut, b.cut)

@@ -7,17 +7,16 @@ export SimpleBond
 export Plug, @plug, @plug_str, is_plug_equal, isplug
 export SimplePlug
 export isdual, isinput, isoutput
+export Layer, InterLayer, layer, layers
+export LayerSite, LayerBond, InterLayerBond
 
 abstract type Tag end
 
 # TODO checkout whether this is a good idea
 Base.copy(x::Tag) = x
 
-abstract type Site <: Tag end
-
-issite(::T) where {T} = issite(T)
-issite(::Type) = false
-issite(::Type{<:Site}) = true
+include("Partition.jl")
+include("Site.jl")
 
 abstract type Link <: Tag end
 
@@ -25,7 +24,6 @@ islink(::T) where {T} = islink(T)
 islink(::Type) = false
 islink(::Type{<:Link}) = true
 
-include("Site.jl")
 include("Bond.jl")
 include("Plug.jl")
 

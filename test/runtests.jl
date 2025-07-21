@@ -7,4 +7,5 @@ using QuantumTags
     @testset "MultiSite" include("unit/multi_site.jl")
     @testset "Plug" include("unit/plug.jl")
     @testset "Bond" include("unit/bond.jl")
+    @testset "Layer" include("unit/layer.jl")
 end
