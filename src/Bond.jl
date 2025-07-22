@@ -24,11 +24,18 @@ hassite(bond::Bond, _site) = any(Base.Fix1(is_site_equal, _site), sites(bond))
 # required for set-like equivalence to work on dictionaries (i.e. )
 @deprecate bond_hash(bond::Bond, h::UInt) hash(bond, h)
 
-function is_bond_equal(a::Bond, b::Bond)
-    s1a, s2a = sites(a)
-    s1b, s2b = sites(b)
-    is_site_equal(s1a, s1b) && is_site_equal(s2a, s2b) || is_site_equal(s1a, s2b) && is_site_equal(s2a, s1b)
+# NOTE taken from `set.jl`: this is like `hash` method for `AbstractSet`
+const hashs_seed = UInt === UInt64 ? 0x852ada37cfe8e0ce : 0xcfe8e0ce
+function Base.hash(b::Bond, h::UInt)
+    hv = hashs_seed
+    for _site in sites(b)
+        hv ⊻= hash(_site)
+    end
+    hash(hv, h)
 end
+
+is_bond_equal(a, b) = isequal(bond(a), bond(b))
+Base.isequal(a::Bond, b::Bond) = is_bond_equal(a, b)
 
 Core.Pair(bond::Bond) = Pair(sites(bond)...)
 Core.Tuple(bond::Bond) = Tuple(sites(bond))
@@ -92,19 +99,14 @@ end
 SimpleBond(a, b) = SimpleBond((a, b))
 @deprecate Bond(a::Site, b::Site) SimpleBond(a, b) true
 
-Base.isequal(a::SimpleBond, b::SimpleBond) = is_bond_equal(a, b)
-
-# NOTE taken from `set.jl`: this is like `hash` method for `AbstractSet`
-const hashs_seed = UInt === UInt64 ? 0x852ada37cfe8e0ce : 0xcfe8e0ce
-function Base.hash(b::Bond, h::UInt)
-    hv = hashs_seed
-    hv ⊻= hash(b.sites[1])
-    hv ⊻= hash(b.sites[2])
-    hash(hv, h)
-end
-
 hassite(bond::SimpleBond, x) = is_site_equal(bond.sites[1], x) || is_site_equal(bond.sites[2], x)
 sites(bond::SimpleBond) = site.(bond.sites)
+
+function is_bond_equal(a::SimpleBond, b::SimpleBond)
+    s1a, s2a = sites(a)
+    s1b, s2b = sites(b)
+    isequal(s1a, s1b) && isequal(s2a, s2b) || isequal(s1a, s2b) && isequal(s2a, s1b)
+end
 
 struct LayerBond{B<:Bond,L<:Layer} <: Bond
     bond::B
@@ -119,7 +121,6 @@ partition(x::LayerBond) = layer(x)
 layer(x::LayerBond) = layer(x.layer)
 
 isbond(x::LayerBond) = isbond(x.bond)
-isplug(x::LayerBond) = isplug(x.bond)
 
 Base.isequal(a::LayerBond, b::LayerBond) = isequal(a.bond, b.bond) && isequal(partition(a), partition(b))
 
@@ -129,10 +130,11 @@ struct InterLayerBond{S<:Site,IL<:InterLayer} <: Bond
     cut::IL
 end
 
-InterLayerBond(site, cut) = InterLayerBond(site, InterLayer(cut))
+InterLayerBond(site::S, cut::C) where {S<:Site,C} = InterLayerBond(site, InterLayer(cut))
 
 site(x::InterLayerBond) = site(x.site)
 sites(x::InterLayerBond) = LayerSite.((site(x),), layers(x.cut))
+interlayer(x::InterLayerBond) = x.cut
 layers(x::InterLayerBond) = layers(x.cut)
 
 Base.isequal(a::InterLayerBond, b::InterLayerBond) = isequal(a.site, b.site) && isequal(a.cut, b.cut)

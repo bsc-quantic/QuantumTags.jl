@@ -57,6 +57,35 @@ _inter_bond = InterLayerBond(site"1", :ket => :bra)
 @test site(_inter_bond) == site"1"
 @test sites(_inter_bond) == (LayerSite(site"1", :ket), LayerSite(site"1", :bra))
 @test layers(_inter_bond) == (Layer(:ket), Layer(:bra))
+@test interlayer(_inter_bond) == InterLayer(Layer(:ket), Layer(:bra))
+
+## test set-like equivalence for `InterLayer`
+@test hash(InterLayer(Layer(:ket), Layer(:bra))) == hash(InterLayer(Layer(:bra), Layer(:ket)))
+@test isequal(InterLayer(Layer(:ket), Layer(:bra)), InterLayer(Layer(:bra), Layer(:ket)))
+
+## test equality under `site`
+# @test is_site_equal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :ket => :bra))
+# @test is_site_equal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :bra => :ket))
+# @test is_site_equal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :asdf => :none))
+
+## test equality under `bond`
+@test is_bond_equal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :ket => :bra))
+@test is_bond_equal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :bra => :ket))
+@test !is_bond_equal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :not_ket => :bra))
+@test !is_bond_equal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"2", :ket => :bra))
+
+## test set-like equivalence for `InterLayerBond`
+@test isequal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :ket => :bra))
+@test isequal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :bra => :ket))
+@test !isequal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"2", :ket => :bra))
+@test !isequal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :ket => :not_bra))
+@test !isequal(InterLayerBond(site"1", :ket => :bra), InterLayerBond(site"1", :not_ket => :bra))
+
+@test hash(InterLayerBond(site"1", :ket => :bra)) == hash(InterLayerBond(site"1", :ket => :bra))
+@test hash(InterLayerBond(site"1", :ket => :bra)) == hash(InterLayerBond(site"1", :bra => :ket))
+@test hash(InterLayerBond(site"1", :ket => :bra)) != hash(InterLayerBond(site"2", :ket => :bra))
+@test hash(InterLayerBond(site"1", :ket => :bra)) != hash(InterLayerBond(site"1", :ket => :not_bra))
+@test hash(InterLayerBond(site"1", :ket => :bra)) != hash(InterLayerBond(site"1", :not_ket => :bra))
 
 # `LayerPlug`
 _plug = LayerPlug(plug"1", :ket)
