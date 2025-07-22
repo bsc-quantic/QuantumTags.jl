@@ -19,6 +19,14 @@ s = lambda"(1,0)-(2,3)"
 @test sites(s) == sites(bond"(1,0)-(2,3)")
 @test issite(s)
 
+# issue: escaping of `i` var in macro
+i = 1
+s = lambda"$i-$(i+1)"
+@test s isa LambdaSite
+@test bond(s) == bond"$i-$(i+1)"
+@test sites(s) == sites(bond"$i-$(i+1)")
+@test issite(s)
+
 @testset "set-like equivalence" begin
     s1 = lambda"1-2"
     s2 = lambda"2-1"

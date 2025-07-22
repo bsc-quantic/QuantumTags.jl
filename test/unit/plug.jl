@@ -50,6 +50,16 @@ s = adjoint(plug"1,2'")
 @test site(s) == site"1, 2"
 @test isdual(s) == false
 
+# issue: escaping of `i` var in macro
+i = 1
+s = plug"$i"
+@test site(s) == site"$i"
+@test isdual(s) == false
+
+s = plug"$i'"
+@test site(s) == site"$i"
+@test isdual(s) == true
+
 @testset "is_plug_equal" begin
     @test is_plug_equal(plug"1", plug"1")
     @test !is_plug_equal(plug"1", plug"2")
