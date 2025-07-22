@@ -8,7 +8,7 @@ issite(::Type{<:Site}) = true
 
 site(x::Site) = x
 
-is_site_equal(x, y) = issite(x) && issite(y) ? site(x) == site(y) : false
+is_site_equal(x, y) = isequal(site(x), site(y))
 
 dispatch_site_constructor(x::Site) = x
 dispatch_site_constructor(x::Symbol) = NamedSite(x)
@@ -97,9 +97,4 @@ site(x::LayerSite) = site(x.site)
 layer(x::LayerSite) = layer(partition(x))
 partition(x::LayerSite) = x.layer
 
-# TODO revise this
-is_site_equal(a::LayerSite, b::LayerSite) = is_site_equal(a.site, b.site)
-is_layer_equal(a::LayerSite, b::LayerSite) = isequal(a.layer, b.layer)
-
-Base.isequal(a::LayerSite, b::LayerSite) = is_site_equal(a, b)
 Base.show(io::IO, x::LayerSite) = print(io, "$(x.site) at $(repr(layer(x)))")

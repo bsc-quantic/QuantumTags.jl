@@ -34,12 +34,7 @@ function Base.hash(b::Bond, h::UInt)
     hash(hv, h)
 end
 
-function is_bond_equal(a::Bond, b::Bond)
-    s1a, s2a = sites(a)
-    s1b, s2b = sites(b)
-    isequal(s1a, s1b) && isequal(s2a, s2b) || isequal(s1a, s2b) && isequal(s2a, s1b)
-end
-
+is_bond_equal(a, b) = isequal(bond(a), bond(b))
 Base.isequal(a::Bond, b::Bond) = is_bond_equal(a, b)
 
 Core.Pair(bond::Bond) = Pair(sites(bond)...)
@@ -107,6 +102,12 @@ SimpleBond(a, b) = SimpleBond((a, b))
 hassite(bond::SimpleBond, x) = is_site_equal(bond.sites[1], x) || is_site_equal(bond.sites[2], x)
 sites(bond::SimpleBond) = site.(bond.sites)
 
+function is_bond_equal(a::SimpleBond, b::SimpleBond)
+    s1a, s2a = sites(a)
+    s1b, s2b = sites(b)
+    isequal(s1a, s1b) && isequal(s2a, s2b) || isequal(s1a, s2b) && isequal(s2a, s1b)
+end
+
 struct LayerBond{B<:Bond,L<:Layer} <: Bond
     bond::B
     layer::L
@@ -129,10 +130,11 @@ struct InterLayerBond{S<:Site,IL<:InterLayer} <: Bond
     cut::IL
 end
 
-InterLayerBond(site, cut) = InterLayerBond(site, InterLayer(cut))
+InterLayerBond(site::S, cut::C) where {S<:Site,C} = InterLayerBond(site, InterLayer(cut))
 
 site(x::InterLayerBond) = site(x.site)
 sites(x::InterLayerBond) = LayerSite.((site(x),), layers(x.cut))
+interlayer(x::InterLayerBond) = x.cut
 layers(x::InterLayerBond) = layers(x.cut)
 
 Base.isequal(a::InterLayerBond, b::InterLayerBond) = isequal(a.site, b.site) && isequal(a.cut, b.cut)
