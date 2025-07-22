@@ -9,6 +9,7 @@ export SimplePlug
 export isdual, isinput, isoutput
 export Layer, InterLayer, layer, layers
 export LayerSite, LayerBond, InterLayerBond
+export LambdaSite, @lambda_str
 
 abstract type Tag end
 
@@ -26,5 +27,7 @@ islink(::Type{<:Link}) = true
 
 include("Bond.jl")
 include("Plug.jl")
+
+include("Lambda.jl")
 
 end # module QuantumTags

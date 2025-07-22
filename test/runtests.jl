@@ -8,4 +8,5 @@ using QuantumTags
     @testset "Plug" include("unit/plug.jl")
     @testset "Bond" include("unit/bond.jl")
     @testset "Layer" include("unit/layer.jl")
+    @testset "Lambda" include("unit/lambda.jl")
 end
