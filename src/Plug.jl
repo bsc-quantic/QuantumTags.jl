@@ -48,7 +48,7 @@ See also: [`@site_str`](@ref)
 macro plug_str(str)
     isdual = endswith(str, '\'')
     str = chopsuffix(str, "'")
-    site_expr = Expr(:macrocall, Symbol("@site_str"), __source__, str)
+    site_expr = esc(Expr(:macrocall, Symbol("@site_str"), __source__, str))
     return :(SimplePlug($(site_expr); isdual=($isdual)))
 end
 

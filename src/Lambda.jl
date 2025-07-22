@@ -12,7 +12,7 @@ sites(s::LambdaSite) = sites(bond(s))
 dispatch_site_constructor(b::Bond) = LambdaSite(b)
 
 macro lambda_str(str)
-    bondexpr = Expr(:macrocall, Symbol("@bond_str"), __source__, str)
+    bondexpr = esc(Expr(:macrocall, Symbol("@bond_str"), __source__, str))
     :(LambdaSite($bondexpr))
 end
 
