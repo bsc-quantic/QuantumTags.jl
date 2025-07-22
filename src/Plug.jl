@@ -85,7 +85,7 @@ LayerPlug(plug, layer) = LayerPlug(plug, Layer(layer))
 
 isplug(x::LayerPlug) = isplug(x.plug)
 
-site(x::LayerPlug) = LayerSite(site(x.plug), (x.layer,))
+site(x::LayerPlug) = LayerSite(site(x.plug), x.layer)
 plug(x::LayerPlug) = plug(x.plug)
 isdual(x::LayerPlug) = isdual(x.plug)
 
