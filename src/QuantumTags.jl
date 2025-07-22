@@ -1,5 +1,6 @@
 module QuantumTags
 
+# TODO `@bond`, `@plug` are not yet implemented
 export Site, @site, @site_str, is_site_equal, issite
 export CartesianSite, NamedSite
 export Bond, @bond, @bond_str, is_bond_equal, isbond

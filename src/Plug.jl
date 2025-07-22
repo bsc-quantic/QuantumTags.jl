@@ -38,6 +38,21 @@ function Base.show(io::IO, x::Plug)
 end
 
 """
+    plug"i,j,...[']"
+
+Constructs a [`Site`](@ref) object with the given coordinates. The coordinates are given as a comma-separated list of integers.
+Optionally, a trailing `'` can be added to indicate that the site is a dual site (i.e. an "input").
+
+See also: [`@site_str`](@ref)
+"""
+macro plug_str(str)
+    isdual = endswith(str, '\'')
+    str = chopsuffix(str, "'")
+    site_expr = Expr(:macrocall, Symbol("@site_str"), __source__, str)
+    return :(SimplePlug($(site_expr); isdual=($isdual)))
+end
+
+"""
     SimplePlug(id[; dual = false])
     SimplePlug(i, j, ...[; dual = false])
 
@@ -60,18 +75,3 @@ isdual(p::SimplePlug) = p.isdual
 
 Base.adjoint(p::SimplePlug) = SimplePlug(site(p); isdual=(!isdual(p)))
 Base.reverse(p::SimplePlug) = adjoint(p)
-
-"""
-    plug"i,j,...[']"
-
-Constructs a [`Site`](@ref) object with the given coordinates. The coordinates are given as a comma-separated list of integers.
-Optionally, a trailing `'` can be added to indicate that the site is a dual site (i.e. an "input").
-
-See also: [`@site_str`](@ref)
-"""
-macro plug_str(str)
-    isdual = endswith(str, '\'')
-    str = chopsuffix(str, "'")
-    site_expr = var"@site_str"(Core.LineNumberNode(0, ""), QuantumTags, str)
-    return :(SimplePlug($(site_expr); isdual=($isdual)))
-end
