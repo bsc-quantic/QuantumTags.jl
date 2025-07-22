@@ -75,3 +75,22 @@ isdual(p::SimplePlug) = p.isdual
 
 Base.adjoint(p::SimplePlug) = SimplePlug(site(p); isdual=(!isdual(p)))
 Base.reverse(p::SimplePlug) = adjoint(p)
+
+struct LayerPlug{P<:Plug,L<:Layer} <: Plug
+    plug::P
+    layer::L
+end
+
+LayerPlug(plug, layer) = LayerPlug(plug, Layer(layer))
+
+isplug(x::LayerPlug) = isplug(x.plug)
+
+site(x::LayerPlug) = LayerSite(site(x.plug), x.layer)
+plug(x::LayerPlug) = plug(x.plug)
+isdual(x::LayerPlug) = isdual(x.plug)
+
+partition(x::LayerPlug) = layer(x)
+layer(x::LayerPlug) = layer(x.layer)
+
+Base.adjoint(x::LayerPlug) = LayerPlug(adjoint(x.plug), layer(x))
+Base.reverse(x::LayerPlug) = LayerPlug(reverse(x.plug), layer(x))

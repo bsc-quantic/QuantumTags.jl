@@ -1,6 +1,6 @@
 using Test
 using QuantumTags
-using QuantumTags: site, bond, ispartition, partition, islayer, isinterlayer, interlayer
+using QuantumTags: site, bond, plug, ispartition, partition, islayer, isinterlayer, interlayer
 
 _layer = Layer(:ket)
 @test ispartition(_layer)
@@ -86,3 +86,20 @@ _inter_bond = InterLayerBond(site"1", :ket => :bra)
 @test hash(InterLayerBond(site"1", :ket => :bra)) != hash(InterLayerBond(site"2", :ket => :bra))
 @test hash(InterLayerBond(site"1", :ket => :bra)) != hash(InterLayerBond(site"1", :ket => :not_bra))
 @test hash(InterLayerBond(site"1", :ket => :bra)) != hash(InterLayerBond(site"1", :not_ket => :bra))
+
+# `LayerPlug`
+_plug = LayerPlug(plug"1", :ket)
+@test isplug(_plug)
+@test plug(_plug) == plug"1"
+@test site(_plug) == LayerSite(site"1", :ket)
+@test partition(_plug) == layer(_plug) == Layer(:ket)
+@test adjoint(_plug) == LayerPlug(plug"1'", :ket)
+@test reverse(_plug) == LayerPlug(plug"1'", :ket)
+
+_plug = LayerPlug(plug"1'", :ket)
+@test isplug(_plug)
+@test plug(_plug) == plug"1'"
+@test site(_plug) == LayerSite(site"1", :ket)
+@test partition(_plug) == layer(_plug) == Layer(:ket)
+@test adjoint(_plug) == LayerPlug(plug"1", :ket)
+@test reverse(_plug) == LayerPlug(plug"1", :ket)
