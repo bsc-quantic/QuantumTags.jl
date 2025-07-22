@@ -9,7 +9,7 @@ export Plug, @plug, @plug_str, is_plug_equal, isplug
 export SimplePlug
 export isdual, isinput, isoutput
 export Layer, InterLayer, layer, layers
-export LayerSite, LayerBond, InterLayerBond
+export LayerSite, LayerBond, InterLayerBond, LayerPlug
 export LambdaSite, @lambda_str
 
 abstract type Tag end

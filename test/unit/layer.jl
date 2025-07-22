@@ -57,3 +57,20 @@ _inter_bond = InterLayerBond(site"1", :ket => :bra)
 @test site(_inter_bond) == site"1"
 @test sites(_inter_bond) == (LayerSite(site"1", :ket), LayerSite(site"1", :bra))
 @test layers(_inter_bond) == (Layer(:ket), Layer(:bra))
+
+# `LayerPlug`
+_plug = LayerPlug(plug"1", :ket)
+@test isplug(_plug)
+@test plug(_plug) == plug"1"
+@test site(_plug) == site"1"
+@test partition(_plug) == layer(_plug) == Layer(:ket)
+@test adjoint(_plug) == LayerPlug(plug"1'", :ket)
+@test reverse(_plug) == LayerPlug(plug"1'", :ket)
+
+_plug = LayerPlug(plug"1'", :ket)
+@test isplug(_plug)
+@test plug(_plug) == plug"1'"
+@test site(_plug) == site"1"
+@test partition(_plug) == layer(_plug) == Layer(:ket)
+@test adjoint(_plug) == LayerPlug(plug"1", :ket)
+@test reverse(_plug) == LayerPlug(plug"1", :ket)
