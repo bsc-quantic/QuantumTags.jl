@@ -18,12 +18,16 @@ dispatch_site_constructor(x::NTuple{N,Int}) where {N} = CartesianSite(x)
 dispatch_site_constructor(x::Vararg{Int,N}) where {N} = CartesianSite(x)
 dispatch_site_constructor(x::Base.CartesianIndex) = CartesianSite(Tuple(x))
 
-macro site(expr)
+function _site_expr(expr)
     expr = MacroTools.postwalk(expr) do x
         Meta.isexpr(x, :$) ? esc(only(x.args)) : x
     end
 
     return :(dispatch_site_constructor($expr))
+end
+
+macro site(expr)
+    _site_expr(expr)
 end
 
 """
@@ -33,7 +37,7 @@ Constructs a [`CartesianSite`](@ref) object with the given coordinates. The coor
 """
 macro site_str(str)
     expr = Meta.parse(str)
-    esc(:($@site $expr))
+    _site_expr(expr)
 end
 
 """
