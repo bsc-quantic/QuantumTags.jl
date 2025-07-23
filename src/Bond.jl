@@ -61,15 +61,7 @@ end
 
 dispatch_bond_constructor(a, b) = SimpleBond(a, b)
 
-"""
-    bond"i-j"
-    bond"(i,j,...)-(k,l,...)"
-
-Constructs a [`SimpleBond`](@ref) object.
-[`Site`](@ref)s are given as a comma-separated list of integers, and source and destination sites are separated by a `-`.
-"""
-macro bond_str(str)
-    expr = Meta.parse(str)
+function _bond_expr(expr)
     if !(Meta.isexpr(expr, :call) && expr.args[1] == :-)
         throw(
             ArgumentError(
@@ -79,7 +71,21 @@ macro bond_str(str)
     end
 
     src, dst = expr.args[2:end]
-    return esc(:($dispatch_bond_constructor(@site($src), @site($dst))))
+    src_expr = _site_expr(src)
+    dst_expr = _site_expr(dst)
+    return :(dispatch_bond_constructor($src_expr, $dst_expr))
+end
+
+"""
+    bond"i-j"
+    bond"(i,j,...)-(k,l,...)"
+
+Constructs a [`SimpleBond`](@ref) object.
+[`Site`](@ref)s are given as a comma-separated list of integers, and source and destination sites are separated by a `-`.
+"""
+macro bond_str(str)
+    expr = Meta.parse(str)
+    _bond_expr(expr)
 end
 
 """
