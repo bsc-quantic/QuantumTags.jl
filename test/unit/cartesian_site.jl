@@ -42,3 +42,25 @@ end
     @test !is_site_equal(site"1,2", site"2,1")
     @test !is_site_equal(site"1,2", site"1")
 end
+
+@testset "arithmetic" begin
+    # addition
+    @test site"1" + 2 == site"3"
+    @test site"1" + (2,) == site"3"
+    @test 2 + site"1" == site"3"
+    @test (2,) + site"1" == site"3"
+
+    @test site"1,2" + (1, 1) == site"2,3"
+    @test (1, 1) + site"1,2" == site"2,3"
+    @test site"1,2" + site"1,1" == site"2,3"
+
+    # subtraction
+    @test site"3" - 2 == site"1"
+    @test site"3" - (2,) == site"1"
+    @test 3 - site"2" == site"1"
+    @test (3,) - site"2" == site"1"
+
+    @test site"2,3" - (1, 1) == site"1,2"
+    @test (2, 3) - site"1,1" == site"1,2"
+    @test site"2,3" - site"1,1" == site"1,2"
+end
