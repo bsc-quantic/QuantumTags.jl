@@ -35,7 +35,11 @@ function Base.hash(b::Bond, h::UInt)
 end
 
 is_bond_equal(a, b) = isequal(bond(a), bond(b))
-Base.isequal(a::Bond, b::Bond) = is_bond_equal(a, b)
+function Base.isequal(a::Bond, b::Bond)
+    s1a, s2a = sites(a)
+    s1b, s2b = sites(b)
+    isequal(s1a, s1b) && isequal(s2a, s2b) || isequal(s1a, s2b) && isequal(s2a, s1b)
+end
 
 Core.Pair(bond::Bond) = Pair(sites(bond)...)
 Core.Tuple(bond::Bond) = Tuple(sites(bond))
@@ -60,9 +64,13 @@ function Base.show(io::IO, x::Bond)
 end
 
 dispatch_bond_constructor(a, b) = SimpleBond(a, b)
+dispatch_bond_constructor(s) = OpenBond(s)
 
 function _bond_expr(expr)
+    # open bond if only one site is given
     if !(Meta.isexpr(expr, :call) && expr.args[1] == :-)
+        # site_expr = _site_expr(expr)
+        # return :(dispatch_bond_constructor($site_expr))
         throw(
             ArgumentError(
                 "Bond string must be in the form 'src-dst', where src and dst are site strings acceptable for @site_str.",
@@ -108,12 +116,6 @@ SimpleBond(a, b) = SimpleBond((a, b))
 hassite(bond::SimpleBond, x) = is_site_equal(bond.sites[1], x) || is_site_equal(bond.sites[2], x)
 sites(bond::SimpleBond) = site.(bond.sites)
 
-function is_bond_equal(a::SimpleBond, b::SimpleBond)
-    s1a, s2a = sites(a)
-    s1b, s2b = sites(b)
-    isequal(s1a, s1b) && isequal(s2a, s2b) || isequal(s1a, s2b) && isequal(s2a, s1b)
-end
-
 struct LayerBond{B<:Bond,L<:Layer} <: Bond
     bond::B
     layer::L
@@ -128,8 +130,6 @@ layer(x::LayerBond) = layer(x.layer)
 
 isbond(x::LayerBond) = isbond(x.bond)
 
-Base.isequal(a::LayerBond, b::LayerBond) = isequal(a.bond, b.bond) && isequal(partition(a), partition(b))
-
 # e.g. a closed plug between two same sites on different layers
 struct InterLayerBond{S<:Site,IL<:InterLayer} <: Bond
     site::S
@@ -143,4 +143,13 @@ sites(x::InterLayerBond) = LayerSite.((site(x),), layers(x.cut))
 interlayer(x::InterLayerBond) = x.cut
 layers(x::InterLayerBond) = layers(x.cut)
 
-Base.isequal(a::InterLayerBond, b::InterLayerBond) = isequal(a.site, b.site) && isequal(a.cut, b.cut)
+# struct OpenBond{S<:Site} <: Bond
+#     site::S
+# end
+
+# site(x::OpenBond) = x.site
+# sites(x::OpenBond) = (site(x),)
+
+# Base.isequal(x::Bond, y::OpenBond) = isequal(y, x)
+# Base.isequal(x::OpenBond, y::Bond) = false
+# Base.isequal(x::OpenBond, y::OpenBond) = isequal(site(x), site(y))
