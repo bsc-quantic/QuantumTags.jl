@@ -64,6 +64,16 @@ Base.ndims(::CartesianSite{N}) where {N} = N
 Core.Tuple(x::CartesianSite) = x.id
 Base.CartesianIndex(x::CartesianSite) = CartesianIndex(Tuple(x))
 
+Base.:(+)(x::CartesianSite{1}, i::Int) = CartesianSite(only(x.id) + i)
+Base.:(+)(x::CartesianSite{N}, t::NTuple{N,Int}) where {N} = CartesianSite(Tuple(x) .+ t)
+Base.:(+)(t::NTuple{N,Int}, x::CartesianSite{N}) where {N} = CartesianSite(t .+ Tuple(x))
+Base.:(+)(x::CartesianSite{N}, y::CartesianSite{N}) where {N} = CartesianSite(Tuple(x) .+ Tuple(y))
+
+Base.:(-)(x::CartesianSite{1}, i::Int) = CartesianSite(only(x.id) - i)
+Base.:(-)(x::CartesianSite{N}, t::NTuple{N,Int}) where {N} = CartesianSite(Tuple(x) .- t)
+Base.:(-)(t::NTuple{N,Int}, x::CartesianSite{N}) where {N} = CartesianSite(t .- Tuple(x))
+Base.:(-)(x::CartesianSite{N}, y::CartesianSite{N}) where {N} = CartesianSite(Tuple(x) .- Tuple(y))
+
 """
     NamedSite(name)
 
