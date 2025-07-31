@@ -11,6 +11,7 @@ export isdual, isinput, isoutput
 export Layer, InterLayer, layer, layers
 export LayerSite, LayerBond, InterLayerBond, LayerPlug
 export LambdaSite, @lambda_str
+export BoundaryBond
 
 abstract type Tag end
 
