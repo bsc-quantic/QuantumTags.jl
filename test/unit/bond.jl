@@ -56,3 +56,14 @@ b = bond"1 | :ket"
 @test boundary(b) == :ket
 @test isequal(b, BoundaryBond(site"1", :ket))
 @test hash(b, zero(UInt)) == hash(BoundaryBond(site"1", :ket))
+
+# test interpolation for boundary
+bound = :ket
+b = bond"1 | $bound"
+@test b == BoundaryBond(site"1", bound)
+@test boundary(b) == bound
+
+bound = site"2"
+b = bond"1 | $bound"
+@test b == BoundaryBond(site"1", bound)
+@test boundary(b) == bound

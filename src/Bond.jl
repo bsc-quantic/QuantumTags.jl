@@ -70,8 +70,11 @@ function _bond_expr(expr)
     # open bond if only one site is given
     if Meta.isexpr(expr, :call) && expr.args[1] == :|
         src, _boundary = expr.args[2:end]
+        boundary_expr = MacroTools.postwalk(_boundary) do x
+            Meta.isexpr(x, :$) ? esc(only(x.args)) : x
+        end
         src_expr = _site_expr(src)
-        return :(BoundaryBond($src_expr, $_boundary))
+        return :(BoundaryBond($src_expr, $boundary_expr))
 
     elseif Meta.isexpr(expr, :call) && expr.args[1] == :-
         src, dst = expr.args[2:end]
