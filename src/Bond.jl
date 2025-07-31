@@ -68,20 +68,24 @@ dispatch_bond_constructor(s) = OpenBond(s)
 
 function _bond_expr(expr)
     # open bond if only one site is given
-    if !(Meta.isexpr(expr, :call) && expr.args[1] == :-)
-        # site_expr = _site_expr(expr)
-        # return :(dispatch_bond_constructor($site_expr))
+    if Meta.isexpr(expr, :call) && expr.args[1] == :|
+        src, _boundary = expr.args[2:end]
+        src_expr = _site_expr(src)
+        return :(BoundaryBond($src_expr, $_boundary))
+
+    elseif Meta.isexpr(expr, :call) && expr.args[1] == :-
+        src, dst = expr.args[2:end]
+        src_expr = _site_expr(src)
+        dst_expr = _site_expr(dst)
+        return :(dispatch_bond_constructor($src_expr, $dst_expr))
+
+    else
         throw(
             ArgumentError(
                 "Bond string must be in the form 'src-dst', where src and dst are site strings acceptable for @site_str.",
             ),
         )
     end
-
-    src, dst = expr.args[2:end]
-    src_expr = _site_expr(src)
-    dst_expr = _site_expr(dst)
-    return :(dispatch_bond_constructor($src_expr, $dst_expr))
 end
 
 """
@@ -143,13 +147,26 @@ sites(x::InterLayerBond) = LayerSite.((site(x),), layers(x.cut))
 interlayer(x::InterLayerBond) = x.cut
 layers(x::InterLayerBond) = layers(x.cut)
 
-# struct OpenBond{S<:Site} <: Bond
-#     site::S
-# end
+struct BoundaryBond{S<:Site,B} <: Bond
+    site::S
+    boundary::B
+end
 
-# site(x::OpenBond) = x.site
-# sites(x::OpenBond) = (site(x),)
+site(x::BoundaryBond) = x.site
+sites(x::BoundaryBond) = (site(x),)
 
-# Base.isequal(x::Bond, y::OpenBond) = isequal(y, x)
-# Base.isequal(x::OpenBond, y::Bond) = false
-# Base.isequal(x::OpenBond, y::OpenBond) = isequal(site(x), site(y))
+boundary(x::BoundaryBond) = x.boundary
+
+Base.isequal(x::Bond, y::BoundaryBond) = isequal(y, x)
+Base.isequal(x::BoundaryBond, y::Bond) = false
+Base.isequal(x::BoundaryBond, y::BoundaryBond) = isequal(site(x), site(y)) && isequal(x.boundary, y.boundary)
+
+Base.hash(x::BoundaryBond, h::UInt) = hash((site(x), x.boundary), h)
+
+function Base.show(io::IO, x::BoundaryBond)
+    print(io, "bond<")
+    print(io, site(x))
+    print(io, " | boundary: ")
+    print(io, x.boundary)
+    print(io, ">")
+end
